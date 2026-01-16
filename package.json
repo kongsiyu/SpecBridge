@@ -1,0 +1,51 @@
+﻿{
+  "name": "specbridge",
+  "version": "0.1.0",
+  "description": "AI-driven spec to project management platform sync tool",
+  "main": "dist/index.js",
+  "bin": {
+    "specbridge": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "package": "pkg . --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --output dist/bin/specbridge",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "spec",
+    "sync",
+    "project-management",
+    "github",
+    "jira",
+    "ai-coding",
+    "kiro"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.1.0",
+    "@octokit/rest": "^20.0.2",
+    "jira-client": "^8.2.2",
+    "gray-matter": "^4.0.3",
+    "yaml": "^2.3.4",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.0",
+    "pkg": "^5.8.1",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

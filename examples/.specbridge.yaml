@@ -1,0 +1,59 @@
+﻿version: "1.0"
+
+# Spec source configuration
+source:
+  type: kiro  # Auto-detects .kiro/specs directory
+  # path: .kiro/specs  # Optional: specify custom path
+
+# Target platforms (you can have multiple)
+targets:
+  # GitHub Issues
+  - name: github-issues
+    type: github
+    enabled: true
+    config:
+      owner: your-organization
+      repo: your-repository
+      token: ${GITHUB_TOKEN}  # Set in environment variable
+    mapping:
+      requirements: issue  # Map requirements to GitHub Issues
+      tasks: issue         # Map tasks to GitHub Issues
+    labels:
+      prefix: "specbridge"
+      requirement: "requirement"
+      task: "task"
+      priority:
+        high: "priority:high"
+        medium: "priority:medium"
+        low: "priority:low"
+
+  # Jira (example, disabled by default)
+  - name: jira-project
+    type: jira
+    enabled: false
+    config:
+      url: https://your-company.atlassian.net
+      project: PROJ  # Your Jira project key
+      email: ${JIRA_EMAIL}
+      token: ${JIRA_TOKEN}
+    mapping:
+      requirements: epic    # Map requirements to Jira Epics
+      tasks: story          # Map tasks to Jira Stories
+      design: confluence    # Map design docs to Confluence
+    priority:
+      high: "Highest"
+      medium: "Medium"
+      low: "Low"
+
+# Optional: Notifications
+notifications:
+  - type: slack
+    webhook: ${SLACK_WEBHOOK}
+    events:
+      - task_completed
+      - requirement_updated
+      - sync_failed
+    recipients:
+      - "@product-manager"
+      - "@project-manager"
+      - "#dev-team"
