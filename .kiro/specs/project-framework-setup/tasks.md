@@ -48,7 +48,7 @@
 ### 阶段 2：配置和适配器接口
 
 #### 2.1 配置管理系统
-- [ ] 5. 定义配置接口 (需求 4)
+- [x] 5. 定义配置接口 (需求 4)
   - 在 `src/core/config.ts` 中定义 Config、SourceConfig、TargetConfig 接口
   - 定义 NotificationConfig 接口
   - 实现 loadConfig 函数读取 .specbridge.yaml
@@ -57,14 +57,14 @@
   - 添加配置版本检查
 
 #### 2.2 源适配器接口
-- [ ] 6. 定义源适配器接口 (需求 2)
+- [x] 6. 定义源适配器接口 (需求 2)
   - 在 `src/adapters/source/base.ts` 中定义 SourceAdapter 接口
   - 定义 detect、parse 和可选的 watch 方法
   - 创建 BaseSourceAdapter 抽象类
   - 实现 validateSpecData 通用验证方法
 
 #### 2.3 目标适配器接口
-- [ ] 7. 定义目标适配器接口 (需求 3)
+- [x] 7. 定义目标适配器接口 (需求 3)
   - 在 `src/adapters/target/base.ts` 中定义 TargetAdapter 接口
   - 定义 init、syncRequirements、syncTasks、syncDesign、getTaskStatus 方法
   - 创建 BaseTargetAdapter 抽象类
