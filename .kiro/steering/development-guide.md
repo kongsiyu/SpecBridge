@@ -8,6 +8,19 @@ inclusion: always
 
 SpecBridge 是一个轻量级的 CLI 工具，用于将 AI 生成的规格文档（如 Kiro）同步到项目管理平台（GitHub、Jira、CodeUp 等）。
 
+## 通用规范
+
+### 交互规范
+
+- **语言**：所有 AI 回复使用中文
+- **沟通**：清晰、简洁、专业
+
+### 文档规范
+
+- **规格文档**：requirements.md、design.md、tasks.md 使用中文编写
+- **代码注释**：JSDoc 和行内注释可使用中英文，优先使用英文以保持国际化
+- **用户界面**：CLI 输出消息可使用中英文，根据目标用户群体决定
+
 ## 核心原则
 
 1. **轻量化**：无需服务器，完全在客户端运行
@@ -193,6 +206,7 @@ source:
 
 ## Git 工作流
 
+- **提交消息语言**：使用中文编写 git commit 消息
 - 使用语义化提交消息（Conventional Commits）
 - 功能开发在独立分支进行
 - 提交前运行 lint 和 format
