@@ -73,7 +73,7 @@
 ### 阶段 3：同步引擎核心
 
 #### 3.1 同步状态管理
-- [ ] 8. 实现同步状态持久化 (需求 20)
+- [x] 8. 实现同步状态持久化 (需求 20)
   - 在 `src/core/sync-state.ts` 中创建 SyncStateManager 类
   - 定义 SyncStateMap 接口
   - 实现 load 和 save 方法
@@ -81,7 +81,7 @@
   - 使用 .specbridge/sync-state.json 存储状态
 
 #### 3.2 同步引擎实现
-- [ ] 9. 实现同步引擎 (需求 5, 16, 17)
+- [x] 9. 实现同步引擎 (需求 5, 16, 17)
   - 在 `src/core/sync-engine.ts` 中创建 SyncEngine 类
   - 定义 SyncStatus 和 SyncOptions 接口
   - 实现 sync 方法协调源和目标适配器
