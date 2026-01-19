@@ -44,43 +44,98 @@ export class KiroAdapter extends BaseSourceAdapter {
    * 解析 Kiro 规格文档
    * Parse Kiro specification documents
    *
-   * @param specPath - Path to specification directory (e.g., .kiro/specs/feature-name)
-   * @returns Parsed specification data
+   * @param specPath - Path to specification directory (.kiro/specs or .kiro/specs/feature-name)
+   * @returns Parsed specification data (merged from all specs if directory contains multiple)
    */
   async parse(specPath: string): Promise<SpecData> {
     try {
-      const specName = path.basename(specPath);
+      // Resolve the actual specs path
+      let specsDir = specPath;
 
-      // Read three files
-      const requirementsPath = path.join(specPath, 'requirements.md');
-      const designPath = path.join(specPath, 'design.md');
-      const tasksPath = path.join(specPath, 'tasks.md');
-
-      // Check if at least one file exists
-      const hasRequirements = await fileExists(requirementsPath);
-      const hasDesign = await fileExists(designPath);
-      const hasTasks = await fileExists(tasksPath);
-
-      if (!hasRequirements && !hasDesign && !hasTasks) {
-        throw new Error(`No specification files found in ${specPath}`);
+      // If specPath is a project root, look for .kiro/specs
+      if (!specsDir.includes('.kiro')) {
+        specsDir = path.join(specPath, '.kiro', 'specs');
       }
 
-      // Parse each file
-      const requirements = await this.parseRequirements(requirementsPath);
-      const design = await this.parseDesign(designPath);
-      const tasks = await this.parseTasks(tasksPath);
+      // Check if specsDir exists
+      if (!fs.existsSync(specsDir)) {
+        throw new Error(`Specifications directory not found: ${specsDir}`);
+      }
+
+      // Check if this is a single spec directory or a specs container
+      const entries = fs.readdirSync(specsDir, { withFileTypes: true });
+      const hasSpecFiles = entries.some(
+        (e) => e.isFile() && ['requirements.md', 'design.md', 'tasks.md'].includes(e.name)
+      );
+
+      let specDirs: string[] = [];
+
+      if (hasSpecFiles) {
+        // This is a single spec directory
+        specDirs = [specsDir];
+      } else {
+        // This is a specs container, find all subdirectories with spec files
+        specDirs = entries
+          .filter((e) => e.isDirectory())
+          .map((e) => path.join(specsDir, e.name))
+          .filter((dir) => {
+            const files = fs.readdirSync(dir);
+            return files.some((f) => ['requirements.md', 'design.md', 'tasks.md'].includes(f));
+          });
+      }
+
+      if (specDirs.length === 0) {
+        throw new Error(`No specification files found in ${specsDir}`);
+      }
+
+      // Parse all specs and merge them
+      const allRequirements: Requirement[] = [];
+      const allTasks: Task[] = [];
+      let mergedDesign: Design | undefined;
+
+      for (const specDir of specDirs) {
+        const specName = path.basename(specDir);
+
+        // Read three files
+        const requirementsPath = path.join(specDir, 'requirements.md');
+        const designPath = path.join(specDir, 'design.md');
+        const tasksPath = path.join(specDir, 'tasks.md');
+
+        // Parse each file
+        const requirements = await this.parseRequirements(requirementsPath);
+        const design = await this.parseDesign(designPath);
+        const tasks = await this.parseTasks(tasksPath);
+
+        // Add spec name prefix to IDs to avoid conflicts
+        const prefixedRequirements = requirements.map((r) => ({
+          ...r,
+          id: `${specName}:${r.id}`,
+        }));
+
+        const prefixedTasks = tasks.map((t) => ({
+          ...t,
+          id: `${specName}:${t.id}`,
+        }));
+
+        allRequirements.push(...prefixedRequirements);
+        allTasks.push(...prefixedTasks);
+
+        if (design && !mergedDesign) {
+          mergedDesign = design;
+        }
+      }
 
       // Build SpecData
       const specData: SpecData = {
         meta: {
-          name: specName,
+          name: path.basename(specsDir),
           version: '1.0.0',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
-        requirements,
-        design,
-        tasks,
+        requirements: allRequirements,
+        design: mergedDesign,
+        tasks: allTasks,
       };
 
       this.validateSpecData(specData);

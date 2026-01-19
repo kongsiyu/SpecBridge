@@ -1,5 +1,5 @@
 {
-  "name": "@your-org/specbridge",
+  "name": "@kongsiyu/specbridge",
   "version": "0.1.0",
   "description": "AI-driven spec to project management platform sync tool",
   "main": "dist/index.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/specbridge.git"
+    "url": "https://github.com/kongsiyu/specbridge.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
