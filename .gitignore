@@ -7,3 +7,16 @@ dist/
 .DS_Store
 
 .kiro/specs/test-feature/
+
+# SpecBridge state
+.specbridge/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db

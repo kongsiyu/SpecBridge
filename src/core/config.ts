@@ -188,7 +188,7 @@ export function validateConfig(config: Config): void {
  * @returns String with environment variables replaced
  */
 export function replaceEnvVars(value: string): string {
-  return value.replace(/\$\{([^}]+)\}/g, (match, varName) => {
+  return value.replace(/\$\{([^}]+)\}/g, (_match, varName) => {
     const envValue = process.env[varName];
     if (envValue === undefined) {
       throw new ConfigParseError(`Environment variable ${varName} is not defined`);

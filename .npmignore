@@ -1,0 +1,53 @@
+# Development files
+src/
+tsconfig.json
+.eslintrc.json
+.prettierrc
+vitest.config.ts
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+
+# Documentation
+docs/
+README.md
+CHANGELOG.md
+
+# Configuration
+.env
+.env.local
+.env.*.local
+.specbridge.yaml
+
+# Git
+.git
+.gitignore
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Kiro specs (test data)
+.kiro/
+
+# Examples
+examples/
+
+# Misc
+.npmignore
+LICENSE
