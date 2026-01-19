@@ -93,7 +93,7 @@
 ### 阶段 4：Kiro 源适配器
 
 #### 4.1 Kiro 适配器实现
-- [ ] 10. 实现 Kiro 源适配器 (需求 13)
+- [x] 10. 实现 Kiro 源适配器 (需求 13)
   - 在 `src/adapters/source/kiro.ts` 中创建 KiroAdapter 类
   - 实现 detect 方法检查 .kiro/specs 目录
   - 实现 parse 方法读取 requirements.md、design.md、tasks.md
@@ -108,7 +108,7 @@
 ### 阶段 5：GitHub 目标适配器
 
 #### 5.1 GitHub 适配器基础
-- [ ] 11. 实现 GitHub 适配器初始化 (需求 14)
+- [x] 11. 实现 GitHub 适配器初始化 (需求 14)
   - 在 `src/adapters/target/github.ts` 中创建 GitHubAdapter 类
   - 定义 GitHubConfig 接口
   - 实现 init 方法支持两种认证方式（token 和 gh-cli）
@@ -116,7 +116,7 @@
   - 检查 gh CLI 可用性（当使用 gh-cli 认证时）
 
 #### 5.2 GitHub Issue 同步
-- [ ] 12. 实现任务同步逻辑 (需求 15, 19)
+- [x] 12. 实现任务同步逻辑 (需求 15, 19)
   - 实现 syncTasks 方法
   - 使用自定义标签 `specbridge:task-id:{id}` 标识 Issue
   - 实现 findIssueByLabel 方法查找已同步的 Issue
@@ -126,7 +126,7 @@
   - 根据任务状态打开/关闭 Issue
   - 支持设置 assignee 和自定义标签
 
-- [ ] 13. 实现需求同步逻辑 (需求 15)
+- [x] 13. 实现需求同步逻辑 (需求 15)
   - 实现 syncRequirements 方法
   - 使用自定义标签 `specbridge:req-id:{id}` 标识 Issue
   - 实现 formatRequirementBody 方法格式化需求正文
@@ -136,12 +136,12 @@
   - 实现 syncDesign 方法（可选功能）
   - 创建特殊的设计文档 Issue
 
-- [ ] 15. 实现任务状态查询 (需求 15)
+- [x] 15. 实现任务状态查询 (需求 15)
   - 实现 getTaskStatus 方法
   - 根据 Issue 状态返回 TaskStatus
 
 #### 5.3 GitHub Issue 评论
-- [ ] 16. 实现同步评论功能 (需求 18)
+- [x] 16. 实现同步评论功能 (需求 18)
   - 实现 addComment 方法添加 Issue 评论
   - 实现 formatChangeComment 方法格式化变更评论
   - 在更新 Issue 时添加变更说明评论
@@ -157,7 +157,7 @@
 ### 阶段 6：CLI 命令实现
 
 #### 6.1 CLI 入口点
-- [ ] 18. 实现 CLI 主入口 (需求 11)
+- [x] 18. 实现 CLI 主入口 (需求 11)
   - 在 `src/index.ts` 中创建 CLI 入口
   - 添加 shebang（#!/usr/bin/env node）
   - 使用 Commander.js 设置程序名称、描述和版本
@@ -168,7 +168,7 @@
   - 无命令时显示帮助信息
 
 #### 6.2 init 命令
-- [ ] 19. 实现 init 命令 (需求 6, 20)
+- [x] 19. 实现 init 命令 (需求 6, 20)
   - 在 `src/cli/commands/init.ts` 中创建 initCommand
   - 创建默认的 .specbridge.yaml 配置文件
   - 支持 --force 选项覆盖现有配置
@@ -177,7 +177,7 @@
   - 显示配置示例和下一步操作
 
 #### 6.3 sync 命令
-- [ ] 20. 实现 sync 命令 (需求 6, 16)
+- [x] 20. 实现 sync 命令 (需求 6, 16)
   - 在 `src/cli/commands/sync.ts` 中创建 syncCommand
   - 支持 --scope 选项（all、requirements、tasks、single）
   - 支持 --id 选项指定单个项目 ID
