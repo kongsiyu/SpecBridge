@@ -3,7 +3,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { TaskStatus } from './models';
+import {
+  TaskStatus,
+  SpecMeta,
+  Requirement,
+  Task,
+  Design,
+  SyncChange,
+  SyncResult,
+  SpecData,
+} from './models';
 
 describe('Core Models', () => {
   describe('TaskStatus enum', () => {
@@ -20,6 +29,336 @@ describe('Core Models', () => {
       expect(statuses).toContain('in_progress');
       expect(statuses).toContain('done');
       expect(statuses).toContain('blocked');
+    });
+
+    it('should have exactly 4 statuses', () => {
+      const statuses = Object.values(TaskStatus);
+      expect(statuses).toHaveLength(4);
+    });
+  });
+
+  describe('SpecMeta interface', () => {
+    it('should create valid SpecMeta', () => {
+      const meta: SpecMeta = {
+        name: 'user-authentication',
+        version: '1.0.0',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      expect(meta.name).toBe('user-authentication');
+      expect(meta.version).toBe('1.0.0');
+      expect(meta.createdAt).toBeTruthy();
+      expect(meta.updatedAt).toBeTruthy();
+    });
+  });
+
+  describe('Requirement interface', () => {
+    it('should create valid Requirement with required fields', () => {
+      const req: Requirement = {
+        id: 'req-1',
+        title: 'User Login',
+        description: 'Users should be able to login',
+      };
+
+      expect(req.id).toBe('req-1');
+      expect(req.title).toBe('User Login');
+      expect(req.description).toBe('Users should be able to login');
+    });
+
+    it('should create Requirement with optional fields', () => {
+      const req: Requirement = {
+        id: 'req-1',
+        title: 'User Login',
+        description: 'Users should be able to login',
+        priority: 'high',
+        labels: ['auth', 'security'],
+        syncId: 'github-123',
+      };
+
+      expect(req.priority).toBe('high');
+      expect(req.labels).toEqual(['auth', 'security']);
+      expect(req.syncId).toBe('github-123');
+    });
+  });
+
+  describe('Task interface', () => {
+    it('should create valid Task with required fields', () => {
+      const task: Task = {
+        id: 'task-1',
+        title: 'Implement login form',
+        status: TaskStatus.TODO,
+      };
+
+      expect(task.id).toBe('task-1');
+      expect(task.title).toBe('Implement login form');
+      expect(task.status).toBe(TaskStatus.TODO);
+    });
+
+    it('should create Task with optional fields', () => {
+      const task: Task = {
+        id: 'task-1',
+        title: 'Implement login form',
+        description: 'Create a login form component',
+        status: TaskStatus.IN_PROGRESS,
+        assignee: 'john',
+        parentId: 'task-0',
+        labels: ['frontend', 'ui'],
+        syncId: 'github-456',
+      };
+
+      expect(task.description).toBe('Create a login form component');
+      expect(task.assignee).toBe('john');
+      expect(task.parentId).toBe('task-0');
+      expect(task.labels).toEqual(['frontend', 'ui']);
+      expect(task.syncId).toBe('github-456');
+    });
+
+    it('should support all task statuses', () => {
+      const statuses = [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE, TaskStatus.BLOCKED];
+
+      statuses.forEach((status) => {
+        const task: Task = {
+          id: 'task-1',
+          title: 'Test task',
+          status,
+        };
+        expect(task.status).toBe(status);
+      });
+    });
+  });
+
+  describe('Design interface', () => {
+    it('should create valid Design with content', () => {
+      const design: Design = {
+        content: '# Design Document\n\nThis is the design.',
+      };
+
+      expect(design.content).toContain('# Design Document');
+    });
+
+    it('should create Design with sections', () => {
+      const design: Design = {
+        content: '# Design Document',
+        sections: {
+          architecture: '## Architecture\n...',
+          database: '## Database\n...',
+        },
+      };
+
+      expect(design.sections).toHaveProperty('architecture');
+      expect(design.sections).toHaveProperty('database');
+    });
+  });
+
+  describe('SyncChange interface', () => {
+    it('should create valid SyncChange for created action', () => {
+      const change: SyncChange = {
+        timestamp: new Date().toISOString(),
+        action: 'created',
+        itemType: 'task',
+        itemId: 'task-1',
+      };
+
+      expect(change.action).toBe('created');
+      expect(change.itemType).toBe('task');
+      expect(change.itemId).toBe('task-1');
+    });
+
+    it('should create SyncChange with changes details', () => {
+      const change: SyncChange = {
+        timestamp: new Date().toISOString(),
+        action: 'updated',
+        itemType: 'task',
+        itemId: 'task-1',
+        changes: [
+          {
+            field: 'title',
+            oldValue: 'Old Title',
+            newValue: 'New Title',
+          },
+          {
+            field: 'status',
+            oldValue: 'todo',
+            newValue: 'in_progress',
+          },
+        ],
+      };
+
+      expect(change.changes).toHaveLength(2);
+      expect(change.changes?.[0].field).toBe('title');
+      expect(change.changes?.[1].field).toBe('status');
+    });
+
+    it('should support all action types', () => {
+      const actions: Array<'created' | 'updated' | 'closed'> = ['created', 'updated', 'closed'];
+
+      actions.forEach((action) => {
+        const change: SyncChange = {
+          timestamp: new Date().toISOString(),
+          action,
+          itemType: 'task',
+          itemId: 'task-1',
+        };
+        expect(change.action).toBe(action);
+      });
+    });
+
+    it('should support all item types', () => {
+      const itemTypes: Array<'requirement' | 'task' | 'design'> = ['requirement', 'task', 'design'];
+
+      itemTypes.forEach((itemType) => {
+        const change: SyncChange = {
+          timestamp: new Date().toISOString(),
+          action: 'created',
+          itemType,
+          itemId: 'item-1',
+        };
+        expect(change.itemType).toBe(itemType);
+      });
+    });
+  });
+
+  describe('SyncResult interface', () => {
+    it('should create valid SyncResult', () => {
+      const result: SyncResult = {
+        success: true,
+        created: 5,
+        updated: 3,
+        failed: 0,
+        changes: [],
+      };
+
+      expect(result.success).toBe(true);
+      expect(result.created).toBe(5);
+      expect(result.updated).toBe(3);
+      expect(result.failed).toBe(0);
+      expect(result.changes).toEqual([]);
+    });
+
+    it('should create SyncResult with errors', () => {
+      const result: SyncResult = {
+        success: false,
+        created: 2,
+        updated: 1,
+        failed: 2,
+        changes: [],
+        errors: ['Error 1', 'Error 2'],
+      };
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toHaveLength(2);
+    });
+
+    it('should create SyncResult with changes', () => {
+      const changes: SyncChange[] = [
+        {
+          timestamp: new Date().toISOString(),
+          action: 'created',
+          itemType: 'task',
+          itemId: 'task-1',
+        },
+      ];
+
+      const result: SyncResult = {
+        success: true,
+        created: 1,
+        updated: 0,
+        failed: 0,
+        changes,
+      };
+
+      expect(result.changes).toHaveLength(1);
+      expect(result.changes[0].action).toBe('created');
+    });
+  });
+
+  describe('SpecData interface', () => {
+    it('should create valid SpecData', () => {
+      const specData: SpecData = {
+        meta: {
+          name: 'user-auth',
+          version: '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        requirements: [
+          {
+            id: 'req-1',
+            title: 'Login',
+            description: 'User login',
+          },
+        ],
+        tasks: [
+          {
+            id: 'task-1',
+            title: 'Implement login',
+            status: TaskStatus.TODO,
+          },
+        ],
+      };
+
+      expect(specData.meta.name).toBe('user-auth');
+      expect(specData.requirements).toHaveLength(1);
+      expect(specData.tasks).toHaveLength(1);
+    });
+
+    it('should create SpecData with design', () => {
+      const specData: SpecData = {
+        meta: {
+          name: 'user-auth',
+          version: '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        requirements: [],
+        design: {
+          content: '# Design',
+        },
+        tasks: [],
+      };
+
+      expect(specData.design).toBeDefined();
+      expect(specData.design?.content).toBe('# Design');
+    });
+
+    it('should create SpecData with empty arrays', () => {
+      const specData: SpecData = {
+        meta: {
+          name: 'empty-spec',
+          version: '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        requirements: [],
+        tasks: [],
+      };
+
+      expect(specData.requirements).toEqual([]);
+      expect(specData.tasks).toEqual([]);
+    });
+
+    it('should create SpecData with multiple items', () => {
+      const specData: SpecData = {
+        meta: {
+          name: 'complex-spec',
+          version: '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        requirements: [
+          { id: 'req-1', title: 'Req 1', description: 'Description 1' },
+          { id: 'req-2', title: 'Req 2', description: 'Description 2' },
+        ],
+        tasks: [
+          { id: 'task-1', title: 'Task 1', status: TaskStatus.TODO },
+          { id: 'task-2', title: 'Task 2', status: TaskStatus.IN_PROGRESS },
+          { id: 'task-3', title: 'Task 3', status: TaskStatus.DONE },
+        ],
+      };
+
+      expect(specData.requirements).toHaveLength(2);
+      expect(specData.tasks).toHaveLength(3);
     });
   });
 });

@@ -1,10 +1,17 @@
 {
-  "name": "specbridge",
+  "name": "@your-org/specbridge",
   "version": "0.1.0",
   "description": "AI-driven spec to project management platform sync tool",
   "main": "dist/index.js",
   "bin": {
     "specbridge": "dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/specbridge.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
@@ -14,7 +21,8 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "vitest --run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "publish:github": "npm run build && npm publish --registry https://npm.pkg.github.com"
   },
   "keywords": [
     "spec",
