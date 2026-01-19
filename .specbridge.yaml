@@ -1,0 +1,37 @@
+# SpecBridge Configuration
+# 
+# This file configures how SpecBridge syncs your specifications
+# to project management platforms.
+
+version: "1.0"
+
+# Source configuration
+# Specifies where to read specifications from
+source:
+  type: kiro
+  path: .kiro/specs
+
+# Target configurations
+# Specifies where to sync specifications to
+targets:
+  - name: github-issues
+    type: github
+    enabled: true
+    config:
+      owner: your-org
+      repo: your-repo
+      token: ${GITHUB_TOKEN}
+      authMethod: token  # token | gh-cli
+      addComments: true  # Add sync comments to issues
+    mapping:
+      requirements: issue
+      tasks: issue
+
+# Optional: Notification configuration
+# notifications:
+#   - type: slack
+#     config:
+#       webhook: ${SLACK_WEBHOOK}
+#     events:
+#       - task_completed
+#       - sync_failed
