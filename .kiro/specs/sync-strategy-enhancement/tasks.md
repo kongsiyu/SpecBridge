@@ -73,22 +73,22 @@
 ### 阶段 2：解析器增强
 
 #### 2.1 增强 Kiro 适配器解析功能
-- [ ] 10. 实现 requirements.md 完整内容读取 (REQ-002)
+- [x] 10. 实现 requirements.md 完整内容读取 (REQ-002)
   - 在 `src/adapters/source/kiro.ts` 的 parse 方法中读取 requirements.md 完整内容
   - 将内容存储到 SpecData 的 epicDescription 字段
   - 如果文件不存在，使用空字符串
 
-- [ ] 11. 实现 Task 自动填充 Spec 信息 (REQ-003)
+- [x] 11. 实现 Task 自动填充 Spec 信息 (REQ-003)
   - 在 `src/adapters/source/kiro.ts` 的 parse 方法中为每个 Task 添加 specName
   - 从 spec 目录路径提取 spec 名称
   - 添加 specPath 字段指向 spec 目录
   - 使用 map 函数批量处理所有 tasks
 
-- [ ] 12. 生成 Epic 标题 (REQ-002)
+- [x] 12. 生成 Epic 标题 (REQ-002)
   - 在 `src/adapters/source/kiro.ts` 中设置 epicTitle 为 spec 名称
   - 确保 epicTitle 格式友好（转换 kebab-case 为可读格式）
 
-- [ ] 13. 编写解析器单元测试
+- [x] 13. 编写解析器单元测试
   - 在 `src/adapters/source/kiro.test.ts` 中测试 epicDescription 读取
   - 测试 Task 的 specName 和 specPath 自动填充
   - 测试 epicTitle 生成

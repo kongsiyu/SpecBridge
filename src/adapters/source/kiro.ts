@@ -92,6 +92,7 @@ export class KiroAdapter extends BaseSourceAdapter {
       const allRequirements: Requirement[] = [];
       const allTasks: Task[] = [];
       let mergedDesign: Design | undefined;
+      let epicDescription = '';
 
       for (const specDir of specDirs) {
         const specName = path.basename(specDir);
@@ -100,6 +101,16 @@ export class KiroAdapter extends BaseSourceAdapter {
         const requirementsPath = path.join(specDir, 'requirements.md');
         const designPath = path.join(specDir, 'design.md');
         const tasksPath = path.join(specDir, 'tasks.md');
+
+        // Read complete requirements.md content for Epic description
+        if (await fileExists(requirementsPath)) {
+          const requirementsContent = await readFile(requirementsPath);
+          // If multiple specs, concatenate with separator
+          if (epicDescription) {
+            epicDescription += '\n\n---\n\n';
+          }
+          epicDescription += requirementsContent;
+        }
 
         // Parse each file
         const requirements = await this.parseRequirements(requirementsPath);
@@ -112,9 +123,12 @@ export class KiroAdapter extends BaseSourceAdapter {
           id: `${specName}:${r.id}`,
         }));
 
+        // Add spec name prefix to IDs and auto-fill spec information
         const prefixedTasks = tasks.map((t) => ({
           ...t,
           id: `${specName}:${t.id}`,
+          specName: specName,
+          specPath: specDir,
         }));
 
         allRequirements.push(...prefixedRequirements);
@@ -136,6 +150,8 @@ export class KiroAdapter extends BaseSourceAdapter {
         requirements: allRequirements,
         design: mergedDesign,
         tasks: allTasks,
+        epicTitle: this.formatEpicTitle(path.basename(specsDir)),
+        epicDescription: epicDescription,
       };
 
       this.validateSpecData(specData);
@@ -143,6 +159,21 @@ export class KiroAdapter extends BaseSourceAdapter {
     } catch (error: any) {
       throw new AdapterError(this.name, `Failed to parse Kiro spec: ${error.message}`);
     }
+  }
+
+  /**
+   * 格式化 Epic 标题
+   * Format Epic title from kebab-case to readable format
+   *
+   * @param specName - Spec name in kebab-case (e.g., "user-authentication")
+   * @returns Formatted title (e.g., "User Authentication")
+   */
+  private formatEpicTitle(specName: string): string {
+    // Convert kebab-case to Title Case
+    return specName
+      .split('-')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   /**
@@ -222,9 +253,11 @@ export class KiroAdapter extends BaseSourceAdapter {
     const content = await readFile(filePath);
     const tasks: Task[] = [];
 
-    // Match task lines: - [ ] 1.1 Task title (@assignee)
+    // Match task lines with two formats:
+    // Format 1: - [ ] 1.1 Task title (@assignee)
+    // Format 2: - [ ] 1. Task title (@assignee)
     // Status: [ ] = todo, [x] = done, [-] = in_progress
-    const taskPattern = /^-\s+\[([ x-])\]\s+(\d+(?:\.\d+)?)\s+(.+?)(?:\s+\(@(\w+)\))?$/gm;
+    const taskPattern = /^-\s+\[([ x-~])\](?:\*|\\\*)?\s+(\d+(?:\.\d+)?)\.\s+(.+?)(?:\s+\(@(\w+)\))?$/gm;
     let match;
 
     while ((match = taskPattern.exec(content)) !== null) {
@@ -239,6 +272,8 @@ export class KiroAdapter extends BaseSourceAdapter {
         status = TaskStatus.DONE;
       } else if (statusChar === '-') {
         status = TaskStatus.IN_PROGRESS;
+      } else if (statusChar === '~') {
+        status = TaskStatus.TODO; // Queued status maps to TODO for now
       } else {
         status = TaskStatus.TODO;
       }

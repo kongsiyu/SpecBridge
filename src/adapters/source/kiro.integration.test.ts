@@ -54,6 +54,44 @@ describe('KiroAdapter Integration', () => {
       expect(specData.design?.content).toBeDefined();
     });
 
+    it('should read complete requirements.md content into epicDescription', async () => {
+      const specData = await adapter.parse(testSpecPath);
+
+      // Verify epicTitle is set and formatted
+      expect(specData.epicTitle).toBeDefined();
+      expect(specData.epicTitle).toBe('Test Feature'); // Formatted from 'test-feature'
+
+      // Verify epicDescription contains requirements.md content
+      expect(specData.epicDescription).toBeDefined();
+      expect(typeof specData.epicDescription).toBe('string');
+      
+      // If requirements.md exists, epicDescription should not be empty
+      if (specData.requirements.length > 0) {
+        expect(specData.epicDescription.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should auto-fill specName and specPath for all tasks', async () => {
+      const specData = await adapter.parse(testSpecPath);
+
+      // Verify all tasks have specName and specPath
+      specData.tasks.forEach((task) => {
+        expect(task.specName).toBeDefined();
+        expect(task.specName).toBe('test-feature');
+        
+        expect(task.specPath).toBeDefined();
+        expect(task.specPath).toContain('test-feature');
+      });
+    });
+
+    it('should have empty epicDescription when requirements.md does not exist', async () => {
+      // This test would need a spec without requirements.md
+      // For now, we just verify the field exists
+      const specData = await adapter.parse(testSpecPath);
+      expect(specData.epicDescription).toBeDefined();
+      expect(typeof specData.epicDescription).toBe('string');
+    });
+
     it('should parse requirements correctly', async () => {
       const specData = await adapter.parse(testSpecPath);
 

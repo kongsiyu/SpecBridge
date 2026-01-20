@@ -46,4 +46,29 @@ describe('KiroAdapter', () => {
       expect(TaskStatus.BLOCKED).toBe('blocked');
     });
   });
+
+  describe('formatEpicTitle', () => {
+    it('should format kebab-case to Title Case', () => {
+      // Access private method through type assertion for testing
+      const formatEpicTitle = (adapter as any).formatEpicTitle.bind(adapter);
+      
+      expect(formatEpicTitle('user-authentication')).toBe('User Authentication');
+      expect(formatEpicTitle('sync-strategy-enhancement')).toBe('Sync Strategy Enhancement');
+      expect(formatEpicTitle('test-feature')).toBe('Test Feature');
+      expect(formatEpicTitle('api-integration')).toBe('Api Integration');
+    });
+
+    it('should handle single word names', () => {
+      const formatEpicTitle = (adapter as any).formatEpicTitle.bind(adapter);
+      
+      expect(formatEpicTitle('authentication')).toBe('Authentication');
+      expect(formatEpicTitle('test')).toBe('Test');
+    });
+
+    it('should handle empty strings', () => {
+      const formatEpicTitle = (adapter as any).formatEpicTitle.bind(adapter);
+      
+      expect(formatEpicTitle('')).toBe('');
+    });
+  });
 });
