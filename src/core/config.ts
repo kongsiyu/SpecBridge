@@ -22,6 +22,43 @@ export interface SourceConfig {
 }
 
 /**
+ * Issue 通道配置
+ * Issue channel configuration
+ */
+export interface IssueChannelConfig {
+  /** 是否启用 Issue 通道 */
+  enabled: boolean;
+  /** 同步粒度（可选，继承自父级配置） */
+  syncLevel?: 'epic' | 'task';
+}
+
+/**
+ * Project 通道配置
+ * Project channel configuration
+ */
+export interface ProjectChannelConfig {
+  /** 是否启用 Project 通道 */
+  enabled: boolean;
+  /** 同步粒度（可选，继承自父级配置） */
+  syncLevel?: 'epic' | 'task';
+  /** 分组方式（spec: 按 Spec 分组, none: 不分组） */
+  groupBy?: 'spec' | 'none';
+  /** 是否自动关联到 Issue（需要 Issue 通道同时启用） */
+  autoLink?: boolean;
+}
+
+/**
+ * 通道配置
+ * Channel configuration for GitHub dual-channel architecture
+ */
+export interface ChannelConfig {
+  /** Issue 通道配置 */
+  issue?: IssueChannelConfig;
+  /** Project 通道配置 */
+  project?: ProjectChannelConfig;
+}
+
+/**
  * 目标配置
  * Target adapter configuration
  */
@@ -32,8 +69,12 @@ export interface TargetConfig {
   type: string;
   /** 是否启用 */
   enabled: boolean;
+  /** 同步粒度（epic: 整个 Spec 作为一个 Epic, task: 每个 Task 单独同步） */
+  syncLevel: 'epic' | 'task';
   /** 平台特定配置 */
   config: any;
+  /** 通道配置（用于 GitHub 双通道架构） */
+  channels?: ChannelConfig;
   /** 映射配置 */
   mapping?: {
     /** 需求映射类型 */
@@ -122,6 +163,93 @@ export async function loadConfig(configPath?: string): Promise<Config> {
 }
 
 /**
+ * 验证并规范化 syncLevel 配置
+ * Validate and normalize syncLevel configuration
+ *
+ * @param syncLevel - The syncLevel value to validate
+ * @param targetName - Name of the target for error messages
+ * @returns Normalized syncLevel value
+ * @throws ConfigParseError if syncLevel is invalid
+ */
+export function validateSyncLevel(syncLevel: any, targetName: string): 'epic' | 'task' {
+  const validLevels = ['epic', 'task'];
+
+  // Check if syncLevel is provided
+  if (!syncLevel) {
+    throw new ConfigParseError(`Target ${targetName}: missing required field 'syncLevel'`);
+  }
+
+  // Check for deprecated 'story' level
+  if (syncLevel === 'story') {
+    console.warn(
+      `⚠️  Warning: Target ${targetName}: 'story' syncLevel is no longer supported and has been automatically downgraded to 'task'. ` +
+        `Please update your configuration file.\n` +
+        `Run 'specbridge migrate-config' to update your configuration to the new format.`
+    );
+    return 'task';
+  }
+
+  // Validate syncLevel
+  if (!validLevels.includes(syncLevel)) {
+    throw new ConfigParseError(
+      `Target ${targetName}: invalid syncLevel '${syncLevel}'. Valid options: ${validLevels.join(', ')}`
+    );
+  }
+
+  return syncLevel as 'epic' | 'task';
+}
+
+/**
+ * 验证通道配置
+ * Validate channel configuration
+ *
+ * @param target - Target configuration to validate
+ * @throws ConfigParseError if channel configuration is invalid
+ */
+export function validateChannelConfig(target: TargetConfig): void {
+  // Only validate if channels are configured
+  if (!target.channels) {
+    return;
+  }
+
+  const { issue, project } = target.channels;
+
+  // At least one channel must be enabled
+  const hasEnabledChannel = issue?.enabled || project?.enabled;
+  if (!hasEnabledChannel) {
+    throw new ConfigParseError(
+      `Target ${target.name}: at least one channel (issue or project) must be enabled when using channel configuration`
+    );
+  }
+
+  // Validate autoLink requires both channels
+  if (project?.autoLink) {
+    if (!issue?.enabled) {
+      throw new ConfigParseError(
+        `Target ${target.name}: autoLink requires both issue and project channels to be enabled. ` +
+          `Please enable the issue channel or disable autoLink.`
+      );
+    }
+  }
+
+  // Validate syncLevel in channels if provided
+  if (issue?.syncLevel) {
+    validateSyncLevel(issue.syncLevel, `${target.name} (issue channel)`);
+  }
+
+  if (project?.syncLevel) {
+    validateSyncLevel(project.syncLevel, `${target.name} (project channel)`);
+  }
+
+  // Validate groupBy option
+  if (project?.groupBy && !['spec', 'none'].includes(project.groupBy)) {
+    throw new ConfigParseError(
+      `Target ${target.name}: invalid groupBy value '${project.groupBy}'. Valid options: spec, none`
+    );
+  }
+}
+
+/**
  * 验证配置
  * Validate configuration
  *
@@ -175,6 +303,12 @@ export function validateConfig(config: Config): void {
     if (!target.config) {
       throw new ConfigParseError(`Target ${index}: missing required field 'config'`);
     }
+
+    // Validate and normalize syncLevel
+    target.syncLevel = validateSyncLevel(target.syncLevel, target.name);
+
+    // Validate channel configuration if present
+    validateChannelConfig(target);
   });
 }
 

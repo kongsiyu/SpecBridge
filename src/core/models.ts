@@ -72,6 +72,32 @@ export interface Task {
   labels?: string[];
   /** 同步到目标平台的 ID */
   syncId?: string;
+  /** 所属 Spec 名称（自动从文件路径提取，如 "user-authentication"） */
+  specName?: string;
+  /** 所属 Spec 路径（如 ".kiro/specs/user-authentication"） */
+  specPath?: string;
+}
+
+/**
+ * Epic 状态模型
+ * Epic status model
+ * 
+ * 用于追踪 Epic（Spec）的整体完成状态和进度
+ * Tracks the overall completion status and progress of an Epic (Spec)
+ */
+export interface EpicStatus {
+  /** Epic 状态（todo: 全部待办, in_progress: 进行中或部分完成, done: 全部完成） */
+  status: 'todo' | 'in_progress' | 'done';
+  /** 完成进度百分比（0-100） */
+  progress: number;
+  /** 任务总数 */
+  total: number;
+  /** 已完成任务数 */
+  completed: number;
+  /** 进行中任务数 */
+  inProgress: number;
+  /** 待办任务数 */
+  todo: number;
 }
 
 /**
@@ -147,4 +173,10 @@ export interface SpecData {
   design?: Design;
   /** 任务列表 */
   tasks: Task[];
+  /** Epic 标题（通常为 Spec 名称） */
+  epicTitle: string;
+  /** Epic 描述（存储 requirements.md 的完整内容） */
+  epicDescription: string;
+  /** Epic 状态（根据任务完成情况自动计算） */
+  epicStatus?: EpicStatus;
 }

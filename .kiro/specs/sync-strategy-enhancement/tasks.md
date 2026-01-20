@@ -17,54 +17,54 @@
 ### 阶段 1：数据模型简化与增强
 
 #### 1.1 更新核心数据模型
-- [ ] 1. 扩展 Task 接口支持 Spec 关联 (REQ-003)
+- [x] 1. 扩展 Task 接口支持 Spec 关联 (REQ-003)
   - 在 `src/core/models.ts` 中的 Task 接口添加 `specName?: string` 字段
   - 添加 `specPath?: string` 字段
   - 更新 JSDoc 注释说明字段用途
 
-- [ ] 2. 创建 Epic 状态模型 (REQ-004)
+- [x] 2. 创建 Epic 状态模型 (REQ-004)
   - 在 `src/core/models.ts` 中创建 EpicStatus 接口
   - 定义 status 字段（'todo' | 'in_progress' | 'done'）
   - 定义 progress 字段（0-100 的数字）
   - 定义 total、completed、inProgress、todo 统计字段
   - 添加完整的 JSDoc 注释
 
-- [ ] 3. 扩展 SpecData 接口支持 Epic 信息 (REQ-002)
+- [x] 3. 扩展 SpecData 接口支持 Epic 信息 (REQ-002)
   - 在 `src/core/models.ts` 中的 SpecData 接口添加 `epicTitle: string` 字段
   - 添加 `epicDescription: string` 字段（存储 requirements.md 完整内容）
   - 添加 `epicStatus?: EpicStatus` 字段
   - 更新 JSDoc 注释
 
-- [ ] 4. 编写数据模型单元测试
+- [x] 4. 编写数据模型单元测试
   - 在 `src/core/models.test.ts` 中添加 EpicStatus 接口测试
   - 测试 Task 接口的新字段
   - 测试 SpecData 接口的新字段
 
 #### 1.2 更新配置模型
-- [ ] 5. 简化 syncLevel 配置选项 (REQ-001)
+- [x] 5. 简化 syncLevel 配置选项 (REQ-001)
   - 在 `src/core/config.ts` 中更新 TargetConfig 接口
   - 将 syncLevel 类型限制为 'epic' | 'task'（移除 'story'）
   - 更新相关 JSDoc 注释说明只支持两种粒度
 
-- [ ] 6. 创建通道配置接口 (REQ-006)
+- [x] 6. 创建通道配置接口 (REQ-006)
   - 在 `src/core/config.ts` 中创建 ChannelConfig 接口
   - 创建 IssueChannelConfig 接口（enabled, syncLevel）
   - 创建 ProjectChannelConfig 接口（enabled, syncLevel, groupBy, autoLink）
   - 在 TargetConfig 中添加 `channels?: ChannelConfig` 字段
 
-- [ ] 7. 实现 syncLevel 验证和自动降级 (REQ-008)
+- [x] 7. 实现 syncLevel 验证和自动降级 (REQ-008)
   - 在 `src/core/config.ts` 中实现 validateSyncLevel 函数
   - 检测 'story' 并自动降级为 'task'
   - 输出警告消息提示用户更新配置
   - 抛出错误对于无效的 syncLevel 值
 
-- [ ] 8. 实现通道配置验证 (REQ-006)
+- [x] 8. 实现通道配置验证 (REQ-006)
   - 在 `src/core/config.ts` 中实现 validateChannelConfig 函数
   - 验证至少启用一个通道
   - 验证 autoLink 需要两个通道都启用
   - 添加友好的错误消息
 
-- [ ] 9. 编写配置验证单元测试
+- [x] 9. 编写配置验证单元测试
   - 在 `src/core/config.test.ts` 中添加 syncLevel 验证测试
   - 测试 story 自动降级功能
   - 测试通道配置验证

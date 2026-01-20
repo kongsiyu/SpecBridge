@@ -2,10 +2,16 @@
  * Unit tests for configuration management
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as path from 'path';
 import { promises as fs } from 'fs';
-import { replaceEnvVars, validateConfig, loadConfig } from './config';
+import {
+  replaceEnvVars,
+  validateConfig,
+  loadConfig,
+  validateSyncLevel,
+  validateChannelConfig,
+} from './config';
 import { ConfigParseError, ConfigNotFoundError } from '../utils/errors';
 import { writeYaml } from '../utils/file';
 
@@ -82,7 +88,9 @@ describe('Configuration Management', () => {
         validateConfig({
           version: '1.0',
           source: { type: 'kiro' },
-          targets: [{ name: 'github', type: 'github', enabled: true, config: {} }],
+          targets: [
+            { name: 'github', type: 'github', enabled: true, syncLevel: 'task', config: {} },
+          ],
         });
       }).not.toThrow();
     });
@@ -173,8 +181,8 @@ describe('Configuration Management', () => {
           version: '1.0',
           source: { type: 'kiro' },
           targets: [
-            { name: 'github', type: 'github', enabled: true, config: {} },
-            { name: 'jira', type: 'jira', enabled: false, config: {} },
+            { name: 'github', type: 'github', enabled: true, syncLevel: 'task', config: {} },
+            { name: 'jira', type: 'jira', enabled: false, syncLevel: 'epic', config: {} },
           ],
         });
       }).not.toThrow();
@@ -185,7 +193,9 @@ describe('Configuration Management', () => {
         validateConfig({
           version: '1.0',
           source: { type: 'kiro' },
-          targets: [{ name: 'github', type: 'github', enabled: true, config: {} }],
+          targets: [
+            { name: 'github', type: 'github', enabled: true, syncLevel: 'task', config: {} },
+          ],
           notifications: [{ type: 'slack', config: {} }],
         });
       }).not.toThrow();
@@ -197,7 +207,9 @@ describe('Configuration Management', () => {
       const configData = {
         version: '1.0',
         source: { type: 'kiro' },
-        targets: [{ name: 'github', type: 'github', enabled: true, config: {} }],
+        targets: [
+          { name: 'github', type: 'github', enabled: true, syncLevel: 'task', config: {} },
+        ],
       };
       await writeYaml(TEST_CONFIG_FILE, configData);
 
@@ -234,6 +246,7 @@ describe('Configuration Management', () => {
             name: 'github',
             type: 'github',
             enabled: true,
+            syncLevel: 'task',
             config: { token: '${GITHUB_TOKEN}' },
           },
         ],
@@ -255,6 +268,7 @@ describe('Configuration Management', () => {
             name: 'github',
             type: 'github',
             enabled: true,
+            syncLevel: 'task',
             config: {
               owner: '${OWNER}',
               repo: '${REPO}',
@@ -297,6 +311,7 @@ describe('Configuration Management', () => {
             name: 'github',
             type: 'github',
             enabled: true,
+            syncLevel: 'task',
             config: { owner: 'org', repo: 'repo' },
             mapping: { tasks: 'issue', requirements: 'issue' },
           },
@@ -309,6 +324,300 @@ describe('Configuration Management', () => {
       expect(config.source.path).toBe('.kiro/specs');
       expect(config.targets[0].mapping?.tasks).toBe('issue');
       expect(config.notifications).toHaveLength(1);
+    });
+  });
+
+  describe('validateSyncLevel', () => {
+    it('should accept epic syncLevel', () => {
+      const result = validateSyncLevel('epic', 'test-target');
+      expect(result).toBe('epic');
+    });
+
+    it('should accept task syncLevel', () => {
+      const result = validateSyncLevel('task', 'test-target');
+      expect(result).toBe('task');
+    });
+
+    it('should auto-downgrade story to task with warning', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const result = validateSyncLevel('story', 'test-target');
+      expect(result).toBe('task');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("'story' syncLevel is no longer supported")
+      );
+      consoleSpy.mockRestore();
+    });
+
+    it('should throw error for invalid syncLevel', () => {
+      expect(() => {
+        validateSyncLevel('invalid', 'test-target');
+      }).toThrow(ConfigParseError);
+      expect(() => {
+        validateSyncLevel('invalid', 'test-target');
+      }).toThrow(/invalid syncLevel/);
+    });
+
+    it('should throw error for missing syncLevel', () => {
+      expect(() => {
+        validateSyncLevel(undefined, 'test-target');
+      }).toThrow(ConfigParseError);
+      expect(() => {
+        validateSyncLevel(undefined, 'test-target');
+      }).toThrow(/missing required field 'syncLevel'/);
+    });
+
+    it('should include target name in error message', () => {
+      expect(() => {
+        validateSyncLevel('invalid', 'my-target');
+      }).toThrow(/my-target/);
+    });
+  });
+
+  describe('validateChannelConfig', () => {
+    it('should accept target without channels', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+      };
+      expect(() => validateChannelConfig(target)).not.toThrow();
+    });
+
+    it('should accept target with issue channel enabled', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          issue: { enabled: true },
+        },
+      };
+      expect(() => validateChannelConfig(target)).not.toThrow();
+    });
+
+    it('should accept target with project channel enabled', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          project: { enabled: true },
+        },
+      };
+      expect(() => validateChannelConfig(target)).not.toThrow();
+    });
+
+    it('should accept target with both channels enabled', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          issue: { enabled: true },
+          project: { enabled: true },
+        },
+      };
+      expect(() => validateChannelConfig(target)).not.toThrow();
+    });
+
+    it('should throw error when no channel is enabled', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          issue: { enabled: false },
+          project: { enabled: false },
+        },
+      };
+      expect(() => validateChannelConfig(target)).toThrow(ConfigParseError);
+      expect(() => validateChannelConfig(target)).toThrow(
+        /at least one channel.*must be enabled/
+      );
+    });
+
+    it('should throw error when autoLink is enabled without issue channel', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          project: { enabled: true, autoLink: true },
+        },
+      };
+      expect(() => validateChannelConfig(target)).toThrow(ConfigParseError);
+      expect(() => validateChannelConfig(target)).toThrow(
+        /autoLink requires both issue and project channels/
+      );
+    });
+
+    it('should accept autoLink when both channels are enabled', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          issue: { enabled: true },
+          project: { enabled: true, autoLink: true },
+        },
+      };
+      expect(() => validateChannelConfig(target)).not.toThrow();
+    });
+
+    it('should validate syncLevel in issue channel', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          issue: { enabled: true, syncLevel: 'invalid' as any },
+        },
+      };
+      expect(() => validateChannelConfig(target)).toThrow(ConfigParseError);
+    });
+
+    it('should validate syncLevel in project channel', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          project: { enabled: true, syncLevel: 'invalid' as any },
+        },
+      };
+      expect(() => validateChannelConfig(target)).toThrow(ConfigParseError);
+    });
+
+    it('should validate groupBy option', () => {
+      const target = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          project: { enabled: true, groupBy: 'invalid' as any },
+        },
+      };
+      expect(() => validateChannelConfig(target)).toThrow(ConfigParseError);
+      expect(() => validateChannelConfig(target)).toThrow(/invalid groupBy value/);
+    });
+
+    it('should accept valid groupBy values', () => {
+      const target1 = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          project: { enabled: true, groupBy: 'spec' as const },
+        },
+      };
+      expect(() => validateChannelConfig(target1)).not.toThrow();
+
+      const target2 = {
+        name: 'test',
+        type: 'github',
+        enabled: true,
+        syncLevel: 'task' as const,
+        config: {},
+        channels: {
+          project: { enabled: true, groupBy: 'none' as const },
+        },
+      };
+      expect(() => validateChannelConfig(target2)).not.toThrow();
+    });
+  });
+
+  describe('validateConfig with syncLevel', () => {
+    it('should accept config with epic syncLevel', () => {
+      expect(() => {
+        validateConfig({
+          version: '1.0',
+          source: { type: 'kiro' },
+          targets: [
+            { name: 'github', type: 'github', enabled: true, syncLevel: 'epic', config: {} },
+          ],
+        });
+      }).not.toThrow();
+    });
+
+    it('should accept config with task syncLevel', () => {
+      expect(() => {
+        validateConfig({
+          version: '1.0',
+          source: { type: 'kiro' },
+          targets: [
+            { name: 'github', type: 'github', enabled: true, syncLevel: 'task', config: {} },
+          ],
+        });
+      }).not.toThrow();
+    });
+
+    it('should auto-downgrade story syncLevel', () => {
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const config: any = {
+        version: '1.0',
+        source: { type: 'kiro' },
+        targets: [
+          { name: 'github', type: 'github', enabled: true, syncLevel: 'story', config: {} },
+        ],
+      };
+      validateConfig(config);
+      expect(config.targets[0].syncLevel).toBe('task');
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it('should throw error for missing syncLevel', () => {
+      expect(() => {
+        validateConfig({
+          version: '1.0',
+          source: { type: 'kiro' },
+          targets: [{ name: 'github', type: 'github', enabled: true, config: {} } as any],
+        });
+      }).toThrow(ConfigParseError);
+    });
+
+    it('should validate channel config in targets', () => {
+      expect(() => {
+        validateConfig({
+          version: '1.0',
+          source: { type: 'kiro' },
+          targets: [
+            {
+              name: 'github',
+              type: 'github',
+              enabled: true,
+              syncLevel: 'task',
+              config: {},
+              channels: {
+                issue: { enabled: false },
+                project: { enabled: false },
+              },
+            },
+          ],
+        });
+      }).toThrow(ConfigParseError);
     });
   });
 });

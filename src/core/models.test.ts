@@ -12,6 +12,7 @@ import {
   SyncChange,
   SyncResult,
   SpecData,
+  EpicStatus,
 } from './models';
 
 describe('Core Models', () => {
@@ -125,6 +126,141 @@ describe('Core Models', () => {
         };
         expect(task.status).toBe(status);
       });
+    });
+
+    it('should create Task with specName and specPath', () => {
+      const task: Task = {
+        id: 'task-1',
+        title: 'Implement login form',
+        status: TaskStatus.TODO,
+        specName: 'user-authentication',
+        specPath: '.kiro/specs/user-authentication',
+      };
+
+      expect(task.specName).toBe('user-authentication');
+      expect(task.specPath).toBe('.kiro/specs/user-authentication');
+    });
+
+    it('should allow Task without specName and specPath', () => {
+      const task: Task = {
+        id: 'task-1',
+        title: 'Implement login form',
+        status: TaskStatus.TODO,
+      };
+
+      expect(task.specName).toBeUndefined();
+      expect(task.specPath).toBeUndefined();
+    });
+  });
+
+  describe('EpicStatus interface', () => {
+    it('should create valid EpicStatus with todo status', () => {
+      const epicStatus: EpicStatus = {
+        status: 'todo',
+        progress: 0,
+        total: 5,
+        completed: 0,
+        inProgress: 0,
+        todo: 5,
+      };
+
+      expect(epicStatus.status).toBe('todo');
+      expect(epicStatus.progress).toBe(0);
+      expect(epicStatus.total).toBe(5);
+      expect(epicStatus.completed).toBe(0);
+      expect(epicStatus.inProgress).toBe(0);
+      expect(epicStatus.todo).toBe(5);
+    });
+
+    it('should create valid EpicStatus with in_progress status', () => {
+      const epicStatus: EpicStatus = {
+        status: 'in_progress',
+        progress: 50,
+        total: 10,
+        completed: 5,
+        inProgress: 2,
+        todo: 3,
+      };
+
+      expect(epicStatus.status).toBe('in_progress');
+      expect(epicStatus.progress).toBe(50);
+      expect(epicStatus.total).toBe(10);
+      expect(epicStatus.completed).toBe(5);
+      expect(epicStatus.inProgress).toBe(2);
+      expect(epicStatus.todo).toBe(3);
+    });
+
+    it('should create valid EpicStatus with done status', () => {
+      const epicStatus: EpicStatus = {
+        status: 'done',
+        progress: 100,
+        total: 8,
+        completed: 8,
+        inProgress: 0,
+        todo: 0,
+      };
+
+      expect(epicStatus.status).toBe('done');
+      expect(epicStatus.progress).toBe(100);
+      expect(epicStatus.total).toBe(8);
+      expect(epicStatus.completed).toBe(8);
+      expect(epicStatus.inProgress).toBe(0);
+      expect(epicStatus.todo).toBe(0);
+    });
+
+    it('should support all epic status values', () => {
+      const statuses: Array<'todo' | 'in_progress' | 'done'> = ['todo', 'in_progress', 'done'];
+
+      statuses.forEach((status) => {
+        const epicStatus: EpicStatus = {
+          status,
+          progress: 0,
+          total: 1,
+          completed: 0,
+          inProgress: 0,
+          todo: 1,
+        };
+        expect(epicStatus.status).toBe(status);
+      });
+    });
+
+    it('should validate progress is between 0 and 100', () => {
+      const epicStatus0: EpicStatus = {
+        status: 'todo',
+        progress: 0,
+        total: 5,
+        completed: 0,
+        inProgress: 0,
+        todo: 5,
+      };
+
+      const epicStatus100: EpicStatus = {
+        status: 'done',
+        progress: 100,
+        total: 5,
+        completed: 5,
+        inProgress: 0,
+        todo: 0,
+      };
+
+      expect(epicStatus0.progress).toBeGreaterThanOrEqual(0);
+      expect(epicStatus0.progress).toBeLessThanOrEqual(100);
+      expect(epicStatus100.progress).toBeGreaterThanOrEqual(0);
+      expect(epicStatus100.progress).toBeLessThanOrEqual(100);
+    });
+
+    it('should validate task counts sum to total', () => {
+      const epicStatus: EpicStatus = {
+        status: 'in_progress',
+        progress: 40,
+        total: 10,
+        completed: 4,
+        inProgress: 3,
+        todo: 3,
+      };
+
+      const sum = epicStatus.completed + epicStatus.inProgress + epicStatus.todo;
+      expect(sum).toBe(epicStatus.total);
     });
   });
 
@@ -296,11 +432,15 @@ describe('Core Models', () => {
             status: TaskStatus.TODO,
           },
         ],
+        epicTitle: 'User Authentication',
+        epicDescription: '# Requirements\n\nUser authentication feature',
       };
 
       expect(specData.meta.name).toBe('user-auth');
       expect(specData.requirements).toHaveLength(1);
       expect(specData.tasks).toHaveLength(1);
+      expect(specData.epicTitle).toBe('User Authentication');
+      expect(specData.epicDescription).toContain('# Requirements');
     });
 
     it('should create SpecData with design', () => {
@@ -316,6 +456,8 @@ describe('Core Models', () => {
           content: '# Design',
         },
         tasks: [],
+        epicTitle: 'User Auth',
+        epicDescription: 'Description',
       };
 
       expect(specData.design).toBeDefined();
@@ -332,10 +474,14 @@ describe('Core Models', () => {
         },
         requirements: [],
         tasks: [],
+        epicTitle: 'Empty Spec',
+        epicDescription: '',
       };
 
       expect(specData.requirements).toEqual([]);
       expect(specData.tasks).toEqual([]);
+      expect(specData.epicTitle).toBe('Empty Spec');
+      expect(specData.epicDescription).toBe('');
     });
 
     it('should create SpecData with multiple items', () => {
@@ -355,10 +501,61 @@ describe('Core Models', () => {
           { id: 'task-2', title: 'Task 2', status: TaskStatus.IN_PROGRESS },
           { id: 'task-3', title: 'Task 3', status: TaskStatus.DONE },
         ],
+        epicTitle: 'Complex Spec',
+        epicDescription: '# Complex Requirements',
       };
 
       expect(specData.requirements).toHaveLength(2);
       expect(specData.tasks).toHaveLength(3);
+    });
+
+    it('should create SpecData with epicStatus', () => {
+      const specData: SpecData = {
+        meta: {
+          name: 'user-auth',
+          version: '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        requirements: [],
+        tasks: [
+          { id: 'task-1', title: 'Task 1', status: TaskStatus.DONE },
+          { id: 'task-2', title: 'Task 2', status: TaskStatus.TODO },
+        ],
+        epicTitle: 'User Auth',
+        epicDescription: 'Description',
+        epicStatus: {
+          status: 'in_progress',
+          progress: 50,
+          total: 2,
+          completed: 1,
+          inProgress: 0,
+          todo: 1,
+        },
+      };
+
+      expect(specData.epicStatus).toBeDefined();
+      expect(specData.epicStatus?.status).toBe('in_progress');
+      expect(specData.epicStatus?.progress).toBe(50);
+      expect(specData.epicStatus?.completed).toBe(1);
+      expect(specData.epicStatus?.total).toBe(2);
+    });
+
+    it('should allow SpecData without epicStatus', () => {
+      const specData: SpecData = {
+        meta: {
+          name: 'user-auth',
+          version: '1.0.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        requirements: [],
+        tasks: [],
+        epicTitle: 'User Auth',
+        epicDescription: 'Description',
+      };
+
+      expect(specData.epicStatus).toBeUndefined();
     });
   });
 });
